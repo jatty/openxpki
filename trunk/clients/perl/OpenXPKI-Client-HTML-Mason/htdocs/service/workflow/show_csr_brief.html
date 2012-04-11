@@ -142,6 +142,11 @@
 % } 
                 </td></tr></table>
     </td>
+%if ($fingerprint) {
+  </tr><tr>
+    <td><% i18nGettext('I18N_OPENXPKI_CERT_FINGERPRINT') %></td>
+    <td><% $fingerprint %></td>
+%}
   </tr>
 % if (scalar @sans) {
   <tr>
@@ -277,6 +282,18 @@
     my $breakable_subject = $subject;
     $breakable_subject =~ s{,}{, }xmsg;
     
+    ## parse and show the MD5/SHA1 hashes of the CSR ###
+    use MIME::Base64;
+    use Digest::MD5 qw(md5_hex);
+    use Digest::SHA1 qw(sha1_hex);
+
+    my $p = $msg->{PARAMS}->{WORKFLOW}->{CONTEXT}->{pkcs10};
+    $p =~ s/-----(BEGIN|END) CERTIFICATE REQUEST-----//g;
+
+    $p = decode_base64($p);
+    my $fingerprint .= "MD5: " . md5_hex($p) . " - SHA1: " . sha1_hex($p) . "\n";
+    $fingerprint =~ s/([0-9a-f]{8})/$1 /g;
+
     my @sans;
     my $san_ser = $msg->{PARAMS}->{WORKFLOW}->{CONTEXT}->{cert_subject_alt_name};
     if (defined $san_ser && $san_ser ne '') {
